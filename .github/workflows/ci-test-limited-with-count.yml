@@ -63,9 +63,9 @@ jobs:
         ports:
           - 27017:27017
 
-    steps:
-      - name: Set up Depot CLI
-        uses: depot/setup-action@v1
+    # steps:
+    #   - name: Set up Depot CLI
+    #     uses: depot/setup-action@v1
 
       # - name: Login to DockerHub
       #   uses: docker/login-action@v3
@@ -74,43 +74,43 @@ jobs:
       #     password: ${{ secrets.DOCKER_HUB_ACCESS_TOKEN }}
 
       # Check out merge commit
-      - name: Fork based /ok-to-test checkout
-        if: inputs.pr != 0
-        uses: actions/checkout@v4
-        with:
-          ref: "refs/pull/${{ inputs.pr }}/merge"
+      # - name: Fork based /ok-to-test checkout
+      #   if: inputs.pr != 0
+      #   uses: actions/checkout@v4
+      #   with:
+      #     ref: "refs/pull/${{ inputs.pr }}/merge"
 
-      # Checkout the code in the current branch in case the workflow is called because of a branch push event
-      - name: Checkout the head commit of the branch
-        if: inputs.pr == 0
-        uses: actions/checkout@v4
+      # # Checkout the code in the current branch in case the workflow is called because of a branch push event
+      # - name: Checkout the head commit of the branch
+      #   if: inputs.pr == 0
+      #   uses: actions/checkout@v4
 
-      # Timestamp will be used to create cache key
-      - id: timestamp
-        run: echo "timestamp=$(date +'%Y-%m-%dT%H:%M:%S')" >> $GITHUB_OUTPUT
+      # # Timestamp will be used to create cache key
+      # - id: timestamp
+      #   run: echo "timestamp=$(date +'%Y-%m-%dT%H:%M:%S')" >> $GITHUB_OUTPUT
 
-      # In case this is second attempt try restoring status of the prior attempt from cache
-      - name: Restore the previous run result
-        id: cache-appsmith
-        uses: actions/cache/restore@v4
-        with:
-          path: |
-            ~/run_result
-          key: ${{ github.run_id }}-${{ github.job }}
-          restore-keys: |
-            ${{ github.run_id }}-${{ github.job }}
+      # # In case this is second attempt try restoring status of the prior attempt from cache
+      # - name: Restore the previous run result
+      #   id: cache-appsmith
+      #   uses: actions/cache/restore@v4
+      #   with:
+      #     path: |
+      #       ~/run_result
+      #     key: ${{ github.run_id }}-${{ github.job }}
+      #     restore-keys: |
+      #       ${{ github.run_id }}-${{ github.job }}
 
-      - name: Get the previous run result
-        if: steps.cache-appsmith.outputs.cache-hit == 'true'
-        id: run_result
-        run: |
-          run_result_env=$(cat ~/run_result)
-          echo "run_result=$run_result_env" >> $GITHUB_OUTPUT
-          if [[ "$run_result_env" == "failedtest" ]]; then
-            echo "rerun=true" >> $GITHUB_OUTPUT
-          else
-            echo "rerun=false" >> $GITHUB_OUTPUT
-          fi
+      # - name: Get the previous run result
+      #   if: steps.cache-appsmith.outputs.cache-hit == 'true'
+      #   id: run_result
+      #   run: |
+      #     run_result_env=$(cat ~/run_result)
+      #     echo "run_result=$run_result_env" >> $GITHUB_OUTPUT
+      #     if [[ "$run_result_env" == "failedtest" ]]; then
+      #       echo "rerun=true" >> $GITHUB_OUTPUT
+      #     else
+      #       echo "rerun=false" >> $GITHUB_OUTPUT
+      #     fi
 
       # Get specs to run
       - name: Get specs to run
@@ -283,8 +283,8 @@ jobs:
         run: |
           echo '#!/bin/bash' > repeat_cypress.sh
           for ((i=1; i<=${{ github.event.inputs.run_count }}; i++)); do
-            echo "Running iteration \$i" >> run_count_log.txt
-            echo "echo Running Cypress test \$i" >> repeat_cypress.sh
+            echo "Running iteration \$i"
+            echo "Running Cypress test \$i"
             echo "npx cypress run --config-file cypress_ci_custom.config.ts --spec ${{ env.specs_to_run }} --browser ${{ env.BROWSER_PATH }} --env NODE_ENV=development" || true >> repeat_cypress.sh
           done
           chmod +x repeat_cypress.sh    
