@@ -287,6 +287,13 @@ jobs:
             echo "npx cypress run --config-file cypress_ci_custom.config.ts --spec ${{ env.specs_to_run }}" >> repeat_cypress.sh
           done
           chmod +x repeat_cypress.sh    
+        env:
+          browser: ${{ env.BROWSER_PATH }}
+          install: false
+          config-file: cypress_ci_custom.config.ts
+          spec: ${{ env.specs_to_run }}
+          working-directory: app/client
+          env: "NODE_ENV=development"
 
       - name: Run the cypress test
         run: ./repeat_cypress.sh
@@ -353,7 +360,6 @@ jobs:
           CYPRESS_S3_ACCESS: ${{ secrets.CYPRESS_S3_ACCESS }}
           CYPRESS_S3_SECRET: ${{ secrets.CYPRESS_S3_SECRET }}
           CYPRESS_STATIC_ALLOCATION: true
-        with:
           browser: ${{ env.BROWSER_PATH }}
           install: false
           config-file: cypress_ci_custom.config.ts
