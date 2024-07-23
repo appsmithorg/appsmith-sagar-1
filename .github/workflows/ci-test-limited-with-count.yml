@@ -1,4 +1,4 @@
-name: Appsmith CI run limited Tests Workflow
+name: Appsmith CI run limited Tests Workflow with count
 
 on:
   # This line enables manual triggering of this workflow.
