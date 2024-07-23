@@ -1,87 +1,36 @@
-name: Count PR Automation test suite
+name: Test Github Actions Dynamic Matrix
 
 on:
-  pull_request:
-    branches:
-      - release
-      - pg
-    types:
-      - labeled
+  workflow_dispatch:
+    inputs:
+      count:
+        description: 'Number of matrix jobs'
+        required: true
+        default: '1'
+        type: number
 
 jobs:
-  parse-tags:
+  setup:
     runs-on: ubuntu-latest
-    if: github.event.label.name == 'ok-to-test'
-    permissions:
-      pull-requests: write
-    defaults:
-      run:
-        shell: bash
     outputs:
-      tags: ${{ steps.parseTags.outputs.tags }}
-      spec: ${{ steps.parseTags.outputs.spec }}
-      matrix: ${{ steps.checkAll.outputs.matrix }}
+      matrix: ${{ steps.matrix.outputs.value }}
     steps:
-
-      # Checkout the code in the current branch in case the workflow is called because of a branch push event
-      - name: Checkout the head commit of the branch
-        uses: actions/checkout@v4
-        with:
-          repository: appsmithorg/appsmith
-
-      # Reads the PR description to retrieve the /ok-to-test or, if that's absent, the /test command
-      - name: Read tags from PR description
-        uses: actions/github-script@v7
-        id: parseTags
-        env:
-          NODE_PATH: "${{ github.workspace }}/.github/workflows/scripts"
-        with:
-          script: |
-            require("test-tag-parser.js")({core, context, github})
-
-      # In case of a run with all test cases, allocate a larger matrix
-      - name: Check if @tag.All is present in tags
-        id: checkAll
+      - id: matrix
         run: |
-          count=${{ github.event.inputs.count || 20 }}  # Default to 20 if not specified
-          tags="${{ steps.parseTags.outputs.tags }}"
-          if [[ -n "${{ steps.parseTags.outputs.spec }}" ]]; then
-            echo "matrix=[0]" >> $GITHUB_OUTPUT
-          else
-            if [[ $tags == "@tag.All" ]]; then
-              matrix_values=$(seq -f '%g' 0 "$count" | paste -sd, -)
-              echo "matrix=[${matrix_values}]" >> $GITHUB_OUTPUT
-            else
-              echo "matrix=[0, 1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11, 12, 13, 14, 15, 16, 17, 18, 19]" >> $GITHUB_OUTPUT
-            fi
-          fi
+          count=${{ github.event.inputs.count }}
+          # Generate matrix values based on the count
+          matrix_values=$(seq -f '"%g"' 1 "$count" | paste -sd, -)
+          echo "value=[${matrix_values}]" >> $GITHUB_ENV
+      - run: |
+          echo "Matrix values: ${{ env.value }}"
 
-      # In case of a runnable command, update the PR with run details
-      - name: Add test response with link to workflow run
-        uses: actions/github-script@v7
-        env:
-          NODE_PATH: "${{ github.workspace }}/.github/workflows/scripts"
-          BODY: |
-            Your tests are running.
-            Tests running at: <${{ github.server_url }}/${{ github.repository }}/actions/runs/${{ github.run_id }}>
-            Commit: ${{ github.event.pull_request.head.sha }}
-            Workflow: `${{ github.workflow }}`
-            Tags: `${{ steps.parseTags.outputs.tags }}`
-            Spec: `${{ steps.parseTags.outputs.spec }}`
-        with:
-          script: |
-            require("write-cypress-status.js")({core, context, github}, "important", process.env.BODY)
-
-  # Call the workflow to run Cypress tests
-  perform-test:
-    needs: [parse-tags]
-    if: success()
-    uses: ./.github/workflows/pr-cypress.yml
-    secrets: inherit
-    with:
-      tags: ${{ needs.parse-tags.outputs.tags }}
-      spec: ${{ needs.parse-tags.outputs.spec }}
-      matrix: ${{ needs.parse-tags.outputs.matrix }}
-      is-pg-build: ${{ github.event.pull_request.base.ref == 'pg' }}
-      count: ${{ github.event.inputs.count || 20 }}  # Pass the count parameter
-      tag: ${{ github.event.inputs.tag || 'default-tag' }}  # Pass the tag parameter
+  build:
+    needs: setup
+    runs-on: ubuntu-latest
+    strategy:
+      matrix:
+        value: ${{ fromJson(needs.setup.outputs.matrix) }}
+      max-parallel: 1  # Run one job at a time
+    steps:
+      - run: |
+          echo "Processing value: ${{ matrix.value }}"
