@@ -283,9 +283,9 @@ jobs:
         run: |
           echo '#!/bin/bash' > repeat_cypress.sh
           for ((i=1; i<=${{ github.event.inputs.run_count }}; i++)); do
+            echo "Running iteration \$i" >> run_count_log.txt
             echo "echo Running Cypress test \$i" >> repeat_cypress.sh
             echo "npx cypress run --config-file cypress_ci_custom.config.ts --spec ${{ env.specs_to_run }} --browser ${{ env.BROWSER_PATH }} --env NODE_ENV=development" || true >> repeat_cypress.sh
-            echo "Completed iteration $i" >> iteration_log.txt
           done
           chmod +x repeat_cypress.sh    
         env:
