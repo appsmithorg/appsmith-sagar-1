@@ -279,7 +279,7 @@ jobs:
             fi
           fi
 
-       - name: Generate script to repeat Cypress tests
+      - name: Generate script to repeat Cypress tests
         run: |
           echo '#!/bin/bash' > repeat_cypress.sh
           for ((i=1; i<=${{ github.event.inputs.run_count }}; i++)); do
