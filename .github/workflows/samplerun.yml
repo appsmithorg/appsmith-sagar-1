@@ -1,7 +1,7 @@
 name: Test Github Actions Dynamic Matrix
 on:
   workflow_dispatch:
-  
+
 jobs:
   setup:
     runs-on: ubuntu-latest
@@ -13,12 +13,14 @@ jobs:
           echo "value=[\"a\", \"b\", \"c\"]" >> $GITHUB_OUTPUT
       - run: |
           echo "${{ steps.matrix.outputs.value }}"
+
   build:
     needs: [ setup ]
     runs-on: ubuntu-latest
     strategy:
       matrix:
         value: ${{fromJSON(needs.setup.outputs.matrix)}}
+      max-parallel: 1  # Run one job at a time
     steps:
       - run: |
           echo "${{ matrix.value }}"
