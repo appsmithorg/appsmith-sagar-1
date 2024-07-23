@@ -21,8 +21,9 @@ jobs:
           # Generate matrix values based on the count
           matrix_values=$(seq -f '"%g"' 1 "$count" | paste -sd, -)
           echo "value=[${matrix_values}]" >> $GITHUB_ENV
+          echo "value=[${matrix_values}]" >> $GITHUB_OUTPUT
       - run: |
-          echo "Matrix values: ${{ env.value }}"
+          echo "Matrix values: ${{ steps.matrix.outputs.value }}"
 
   build:
     needs: setup
