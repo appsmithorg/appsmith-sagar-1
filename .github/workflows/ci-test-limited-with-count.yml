@@ -284,7 +284,8 @@ jobs:
           echo '#!/bin/bash' > repeat_cypress.sh
           for ((i=1; i<=${{ github.event.inputs.run_count }}; i++)); do
             echo "echo Running Cypress test \$i" >> repeat_cypress.sh
-              echo "npx cypress run --config-file cypress_ci_custom.config.ts --spec ${{ env.specs_to_run }} --browser ${{ env.BROWSER_PATH }} --env NODE_ENV=development" || true >> repeat_cypress.sh
+            echo "npx cypress run --config-file cypress_ci_custom.config.ts --spec ${{ env.specs_to_run }} --browser ${{ env.BROWSER_PATH }} --env NODE_ENV=development" || true >> repeat_cypress.sh
+            echo "Completed iteration $i" >> iteration_log.txt
           done
           chmod +x repeat_cypress.sh    
         env:
@@ -296,7 +297,9 @@ jobs:
           env: "NODE_ENV=development"
 
       - name: Run the cypress test
-        run: ./repeat_cypress.sh
+        run: |   
+          ./repeat_cypress.sh
+          echo "Run count: ${{ github.event.inputs.run_count }}"
         env:
           GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
           CYPRESS_USERNAME: ${{ secrets.CYPRESS_USERNAME }}
@@ -361,7 +364,7 @@ jobs:
           CYPRESS_S3_SECRET: ${{ secrets.CYPRESS_S3_SECRET }}
           CYPRESS_STATIC_ALLOCATION: true
         continue-on-error: true
-        
+
       - name: Trim number of cypress log files
         if: failure()
         run: |
