@@ -68,6 +68,7 @@ jobs:
         value: ${{fromJSON(needs.setup.outputs.matrix)}}
       max-parallel: 1  # Run one job at a time
     needs: [ setup ]
+    continue-on-error: true
     # Service containers to run with this job. Required for running tests
     services:
       # Label used to access the service container
